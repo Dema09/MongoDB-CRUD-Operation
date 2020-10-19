@@ -24,3 +24,12 @@ func CreateUser(c *gin.Context){
 
 	c.JSON(http.StatusCreated, response.NewStatusCreated("The user data has been inserted to database!", userResponse))
 }
+
+func GetAllUser(c *gin.Context){
+	userResponse, err := service.GetAllUserData()
+	if err != nil{
+		c.JSON(err.StatusCode, err)
+		return
+	}
+	c.JSON(http.StatusOK, response.NewStatusOK(userResponse))
+}
