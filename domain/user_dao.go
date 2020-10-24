@@ -5,7 +5,9 @@ import (
 	"MongoDB-CRUD-Operation/config/logger"
 	"MongoDB-CRUD-Operation/response"
 	"context"
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var(
@@ -36,4 +38,21 @@ func (user *User) GetAllUser() ([]bson.M,*response.RestBody){
 		return nil, response.NewInternalServerError("There is an error in our database!")
 	}
 	return users, nil
+}
+
+func (user *User) UpdateUserById(userId string)(string, *response.RestBody){
+	id, _ := primitive.ObjectIDFromHex(userId)
+	result, err := userCollection.UpdateOne(context.TODO(), bson.M{"_id": id}, bson.D{
+		{"$set", bson.D{
+			{"firstname", user.FirstName},
+			{"lastname", user.LastName},
+			{"address", user.Address},
+		}},
+	})
+
+	if err != nil{
+		logger.Error("Error when trying to update the user data: ", err)
+		return "", response.NewInternalServerError("There is something error in our database!")
+	}
+	return fmt.Sprintf("Updated %d Data!", result.ModifiedCount), nil
 }

@@ -26,3 +26,12 @@ func GetAllUserData()([]bson.M, *response.RestBody){
 	}
 	return userDataResponse, nil
 }
+
+func EditProfileById(userId string, updateUserData domain.User)(interface{}, *response.RestBody){
+	updateUserResponse, err := updateUserData.UpdateUserById(userId)
+
+	if err != nil{
+		return nil, err
+	}
+	return updateUserResponse, nil
+}

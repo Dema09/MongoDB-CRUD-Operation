@@ -33,3 +33,21 @@ func GetAllUser(c *gin.Context){
 	}
 	c.JSON(http.StatusOK, response.NewStatusOK(userResponse))
 }
+
+func EditUserData(c *gin.Context){
+	var updateUserBody domain.User
+	userId := c.Query("user_id")
+
+	if err := c.ShouldBindJSON(&updateUserBody); err != nil{
+		responseError := response.NewBadRequest("Invalid JSON Body!")
+		c.JSON(responseError.StatusCode, responseError)
+		return
+	}
+	editProfileResponse, err := service.EditProfileById(userId, updateUserBody)
+
+	if err != nil{
+		c.JSON(err.StatusCode, err)
+		return
+	}
+	c.JSON(http.StatusOK, response.NewStatusOK(editProfileResponse))
+}
