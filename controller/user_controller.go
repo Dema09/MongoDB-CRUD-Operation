@@ -51,3 +51,14 @@ func EditUserData(c *gin.Context){
 	}
 	c.JSON(http.StatusOK, response.NewStatusOK(editProfileResponse))
 }
+
+func DeleteUserData(c *gin.Context){
+	userId := c.Query("user_id")
+
+	deleteUserDataById, err := service.DeleteUserDataById(userId)
+	if err != nil{
+		c.JSON(err.StatusCode, err)
+		return
+	}
+	c.JSON(http.StatusOK, deleteUserDataById)
+}

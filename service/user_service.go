@@ -35,3 +35,13 @@ func EditProfileById(userId string, updateUserData domain.User)(interface{}, *re
 	}
 	return updateUserResponse, nil
 }
+
+func DeleteUserDataById(userId string)(string, *response.RestBody){
+	userData := &domain.User{}
+	deleteUserDataResponse, err := userData.DeleteUserByUserId(userId)
+
+	if err != nil{
+		return "", err
+	}
+	return deleteUserDataResponse, nil
+}

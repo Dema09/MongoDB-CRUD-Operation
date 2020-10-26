@@ -56,3 +56,23 @@ func (user *User) UpdateUserById(userId string)(string, *response.RestBody){
 	}
 	return fmt.Sprintf("Updated %d Data!", result.ModifiedCount), nil
 }
+
+func (user *User) DeleteUserByUserId(userId string) (string, *response.RestBody){
+	id, err := primitive.ObjectIDFromHex(userId)
+	if err != nil{
+		logger.Error(fmt.Sprintf("Cannot Found Data with Id %s Because: ", userId), err)
+		return "", response.NewInternalServerError("There something error in our database!")
+	}
+	deleteResponse, err := userCollection.DeleteOne(context.TODO(),
+		bson.M{
+		"_id": id,
+		})
+
+	if err != nil{
+		logger.Error("Cannot Execute Delete Statement: ", err)
+		return "", response.NewInternalServerError("There is something error in our database!")
+	}
+
+	return fmt.Sprintf("Successfully Delete %d Data With Id: %s", deleteResponse.DeletedCount, userId), nil
+
+}
