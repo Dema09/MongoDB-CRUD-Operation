@@ -62,3 +62,14 @@ func DeleteUserData(c *gin.Context){
 	}
 	c.JSON(http.StatusOK, deleteUserDataById)
 }
+
+func GetUserById(c *gin.Context){
+	userId := c.Query("user_id")
+	userResponse, err := service.GetUserDataById(userId)
+
+	if err != nil{
+		c.JSON(err.StatusCode, err)
+		return
+	}
+	c.JSON(http.StatusOK, userResponse)
+}

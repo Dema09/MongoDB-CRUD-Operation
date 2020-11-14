@@ -60,7 +60,7 @@ func (user *User) UpdateUserById(userId string)(string, *response.RestBody){
 func (user *User) DeleteUserByUserId(userId string) (string, *response.RestBody){
 	id, err := primitive.ObjectIDFromHex(userId)
 	if err != nil{
-		logger.Error(fmt.Sprintf("Cannot Found Data with Id %s Because: ", userId), err)
+		logger.Error(fmt.Sprintf("Cannot Read Id %s Because: ", userId), err)
 		return "", response.NewInternalServerError("There something error in our database!")
 	}
 	deleteResponse, err := userCollection.DeleteOne(context.TODO(),
@@ -75,4 +75,21 @@ func (user *User) DeleteUserByUserId(userId string) (string, *response.RestBody)
 
 	return fmt.Sprintf("Successfully Delete %d Data With Id: %s", deleteResponse.DeletedCount, userId), nil
 
+}
+
+func (user *User) FindUserDataById(userId string) (*User, *response.RestBody){
+	id, err := primitive.ObjectIDFromHex(userId)
+	if err != nil{
+		logger.Error(fmt.Sprintf("Cannot Read Id %s Because: ", userId), err)
+		return nil, response.NewInternalServerError("There is something error in our system!")
+	}
+
+	userResponse := userCollection.FindOne(context.Background(),
+		bson.M{
+			"_id": id,
+		})
+
+	userDecode := &User{}
+	userResponse.Decode(userDecode)
+	return userDecode, nil
 }

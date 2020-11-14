@@ -7,4 +7,5 @@ func UrlMapping(){
 	router.GET("/v1/getAllUser", controller.GetAllUser)
 	router.PUT("/v1/updateUserData", controller.EditUserData)
 	router.DELETE("/v1/deleteUserData", controller.DeleteUserData)
+	router.GET("/v1/getUserById", controller.GetUserById)
 }

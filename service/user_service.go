@@ -45,3 +45,12 @@ func DeleteUserDataById(userId string)(string, *response.RestBody){
 	}
 	return deleteUserDataResponse, nil
 }
+
+func GetUserDataById(userId string) (interface{}, *response.RestBody){
+	userData := &domain.User{}
+	userByIdResponse, err := userData.FindUserDataById(userId)
+	if err != nil{
+		return nil, err
+	}
+	return userByIdResponse, nil
+}
