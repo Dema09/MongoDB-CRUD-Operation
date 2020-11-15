@@ -15,6 +15,7 @@ var(
 )
 
 func (user *User) SaveUser() (interface{}, *response.RestBody){
+	user.UserId = primitive.NewObjectID()
 	insertResult, err := userCollection.InsertOne(context.TODO(), user)
 	if err != nil{
 		logger.Error("There is something error when inserting data into MongoDB Database: ", err)
@@ -93,3 +94,23 @@ func (user *User) FindUserDataById(userId string) (*User, *response.RestBody){
 	userResponse.Decode(userDecode)
 	return userDecode, nil
 }
+
+func (user *User) EditUserProfile() (string,*response.RestBody){
+	userResponse, err := userCollection.UpdateOne(context.TODO(),
+		bson.M{"userid" : user.UserId},
+		bson.D{
+		{"$set", bson.D{
+			{"firstname", user.FirstName},
+			{"lastname", user.LastName},
+			{"address", user.Address},
+			{"profilepicture", user.ProfilePicture},
+			},
+		}})
+
+	if err != nil{
+		logger.Error("Cannot update the data", err)
+		return "",response.NewInternalServerError("There is something error in our database!")
+	}
+	return fmt.Sprintf("Success Update %d Data!", userResponse.ModifiedCount), nil
+}
+

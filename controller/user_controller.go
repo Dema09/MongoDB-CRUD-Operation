@@ -43,7 +43,7 @@ func EditUserData(c *gin.Context){
 		c.JSON(responseError.StatusCode, responseError)
 		return
 	}
-	editProfileResponse, err := service.EditProfileById(userId, updateUserBody)
+	editProfileResponse, err := service.EditUserDataById(userId, updateUserBody)
 
 	if err != nil{
 		c.JSON(err.StatusCode, err)
@@ -72,4 +72,15 @@ func GetUserById(c *gin.Context){
 		return
 	}
 	c.JSON(http.StatusOK, userResponse)
+}
+
+func EditProfile(c *gin.Context){
+	userId := c.Query("user_id")
+	editProfileResponse, err := service.EditCurrentProfile(c, userId)
+
+	if err != nil{
+		c.JSON(err.StatusCode, err)
+		return
+	}
+	c.JSON(editProfileResponse.StatusCode, editProfileResponse)
 }
