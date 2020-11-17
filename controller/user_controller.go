@@ -84,3 +84,13 @@ func EditProfile(c *gin.Context){
 	}
 	c.JSON(editProfileResponse.StatusCode, editProfileResponse)
 }
+
+func ShowUserProfileByUserId(c *gin.Context){
+	userId := c.Query("user_id")
+	showImageResponse, err := service.ShowUserProfileByUserId(userId)
+	if err != nil{
+		c.JSON(err.StatusCode, err)
+		return
+	}
+	c.JSON(http.StatusOK, showImageResponse)
+}

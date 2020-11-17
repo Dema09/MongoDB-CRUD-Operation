@@ -5,11 +5,15 @@ import (
 	"MongoDB-CRUD-Operation/constant"
 	"MongoDB-CRUD-Operation/domain"
 	"MongoDB-CRUD-Operation/response"
+	"bufio"
+	"encoding/base64"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	_ "image/jpeg"
 	"io"
+	"io/ioutil"
 	"os"
 )
 
@@ -80,6 +84,36 @@ func EditCurrentProfile(c *gin.Context, userId string) (*response.RestBody, *res
 		return nil, editError
 	}
 	return response.NewStatusOK(editUserDataResponse), nil
+}
+
+func ShowUserProfileByUserId(userId string)(*response.RestBody, *response.RestBody){
+	userIdFromObjectId, err := primitive.ObjectIDFromHex(userId)
+	if err != nil{
+		logger.Error(fmt.Sprintf("Cannot Parse Id with Id: %s", userId), err)
+		return nil, response.NewBadRequest("Your Id is Invalid!")
+	}
+
+	userData := &domain.User{UserId: userIdFromObjectId}
+	findUserResponse := userData.FindUserByUserId()
+
+	imageFile, imageErr := os.Open(constant.PhotoProfilePath + findUserResponse.ProfilePicture)
+	if imageErr != nil{
+		logger.Error("Error when opening the picture", imageErr)
+		return nil, response.NewInternalServerError("Cannot find your image!")
+	}
+
+	reader := bufio.NewReader(imageFile)
+	content, _ := ioutil.ReadAll(reader)
+	encodedImageInString := base64.StdEncoding.EncodeToString(content)
+
+	userData.UserId = findUserResponse.UserId
+	userData.FirstName = findUserResponse.FirstName
+	userData.LastName = findUserResponse.LastName
+	userData.Address = findUserResponse.Address
+	userData.ProfilePicture = encodedImageInString
+
+	return response.NewStatusOK(userData), nil
+
 }
 
 func convertProfilePicture(c *gin.Context) string {
