@@ -114,3 +114,13 @@ func (user *User) EditUserProfile() (string,*response.RestBody){
 	return fmt.Sprintf("Success Update %d Data!", userResponse.ModifiedCount), nil
 }
 
+func (user *User) FindUserByUserId() *User{
+	userResponse := userCollection.FindOne(context.TODO(),
+		bson.M{
+			"userid": user.UserId,
+		})
+	userData := &User{}
+	userResponse.Decode(userData)
+	return userData
+}
+
