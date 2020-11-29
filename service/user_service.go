@@ -7,14 +7,14 @@ import (
 	"MongoDB-CRUD-Operation/response"
 	"bufio"
 	"encoding/base64"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	_ "image/jpeg"
 	"io"
 	"io/ioutil"
+	"math"
 	"os"
+	"time"
 )
 
 func SaveUserData(user domain.User) (interface{},*response.RestBody){
@@ -67,19 +67,14 @@ func GetUserDataById(userId string) (interface{}, *response.RestBody){
 }
 
 func EditCurrentProfile(c *gin.Context, userId string) (*response.RestBody, *response.RestBody){
-	id, err := primitive.ObjectIDFromHex(userId)
-	if err != nil{
-		logger.Error("Cannot Parse Id!", err)
-		return nil,  response.NewBadRequest(fmt.Sprintf("Cannot Parse id %s", userId))
-	}
-	
-	userData := &domain.User{UserId: id}
+
+	userData := &domain.User{}
 	userData.FirstName = c.PostForm("first_name")
 	userData.LastName = c.PostForm("last_name")
 	userData.Address = c.PostForm("address")
 	userData.ProfilePicture = convertProfilePicture(c)
 	
-	editUserDataResponse, editError := userData.EditUserProfile()
+	editUserDataResponse, editError := userData.EditUserProfile(userId)
 	if editError != nil{
 		return nil, editError
 	}
@@ -87,14 +82,14 @@ func EditCurrentProfile(c *gin.Context, userId string) (*response.RestBody, *res
 }
 
 func ShowUserProfileByUserId(userId string)(*response.RestBody, *response.RestBody){
-	userIdFromObjectId, err := primitive.ObjectIDFromHex(userId)
-	if err != nil{
-		logger.Error(fmt.Sprintf("Cannot Parse Id with Id: %s", userId), err)
-		return nil, response.NewBadRequest("Your Id is Invalid!")
-	}
 
-	userData := &domain.User{UserId: userIdFromObjectId}
-	findUserResponse := userData.FindUserByUserId()
+	userData := &domain.User{}
+	profileMapping := &domain.ProfileResponse{}
+
+	findUserResponse, err := userData.FindUserByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
 
 	imageFile, imageErr := os.Open(constant.PhotoProfilePath + findUserResponse.ProfilePicture)
 	if imageErr != nil{
@@ -106,14 +101,37 @@ func ShowUserProfileByUserId(userId string)(*response.RestBody, *response.RestBo
 	content, _ := ioutil.ReadAll(reader)
 	encodedImageInString := base64.StdEncoding.EncodeToString(content)
 
-	userData.UserId = findUserResponse.UserId
-	userData.FirstName = findUserResponse.FirstName
-	userData.LastName = findUserResponse.LastName
-	userData.Address = findUserResponse.Address
-	userData.ProfilePicture = encodedImageInString
+	profileMapping.FirstName = findUserResponse.FirstName
+	profileMapping.LastName = findUserResponse.LastName
+	profileMapping.Address = findUserResponse.Address
+	profileMapping.ProfilePicture = encodedImageInString
+	profileMapping.Age = getUserAge(findUserResponse.DateOfBirth)
 
-	return response.NewStatusOK(userData), nil
+	logger.Info("Getting user profile successfully!")
+	return response.NewStatusOK(profileMapping), nil
 
+}
+
+func getUserAge(dateOfBirth string) float64 {
+	userAge, err := time.Parse(constant.DateFormat, dateOfBirth)
+	if err != nil{
+		logger.Error("Error when parsing user date of birth", err)
+		return 0
+	}
+	birthDay := time.Date(userAge.Year(), userAge.Month(), userAge.Day(), 0, 0, 0, 0, time.UTC)
+	today := time.Now()
+
+	age := math.Floor(today.Sub(birthDay).Hours() / 24 / 365)
+	return age
+}
+
+func GetAllAdultUser() (*response.RestBody, *response.RestBody){
+	var userData domain.User
+	adultUserResponse, err := userData.FindAllAdultUser()
+	if err != nil{
+		return nil, err
+	}
+	return response.NewStatusOK(adultUserResponse), nil
 }
 
 func convertProfilePicture(c *gin.Context) string {
@@ -135,5 +153,7 @@ func convertProfilePicture(c *gin.Context) string {
 
 	defer filePath.Close()
 	io.Copy(filePath, file)
+
+	logger.Info("Successfully convert and save image to file system!")
 	return handler.Filename
 }

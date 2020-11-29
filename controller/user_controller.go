@@ -94,3 +94,12 @@ func ShowUserProfileByUserId(c *gin.Context){
 	}
 	c.JSON(http.StatusOK, showImageResponse)
 }
+
+func GetAdultUser(c *gin.Context){
+	getAdultUserResponse, err := service.GetAllAdultUser()
+	if err != nil{
+		c.JSON(err.StatusCode, err)
+		return
+	}
+	c.JSON(getAdultUserResponse.StatusCode, getAdultUserResponse)
+}
