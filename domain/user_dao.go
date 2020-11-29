@@ -15,7 +15,6 @@ var(
 )
 
 func (user *User) SaveUser() (interface{}, *response.RestBody){
-	user.UserId = primitive.NewObjectID()
 	insertResult, err := userCollection.InsertOne(context.TODO(), user)
 	if err != nil{
 		logger.Error("There is something error when inserting data into MongoDB Database: ", err)
@@ -95,9 +94,9 @@ func (user *User) FindUserDataById(userId string) (*User, *response.RestBody){
 	return userDecode, nil
 }
 
-func (user *User) EditUserProfile() (string,*response.RestBody){
+func (user *User) EditUserProfile(userId string) (string,*response.RestBody){
 	userResponse, err := userCollection.UpdateOne(context.TODO(),
-		bson.M{"userid" : user.UserId},
+		bson.M{"_id" : userId},
 		bson.D{
 		{"$set", bson.D{
 			{"firstname", user.FirstName},
@@ -114,13 +113,35 @@ func (user *User) EditUserProfile() (string,*response.RestBody){
 	return fmt.Sprintf("Success Update %d Data!", userResponse.ModifiedCount), nil
 }
 
-func (user *User) FindUserByUserId() *User{
-	userResponse := userCollection.FindOne(context.TODO(),
+func (user *User) FindUserByUserId(userId string) (*User, *response.RestBody){
+	userIdInObjectId, err := primitive.ObjectIDFromHex(userId)
+	if err != nil{
+		logger.Error(fmt.Sprintf("Error when getting an object_id from userid %s", userId), err)
+		return nil, response.NewInternalServerError("There is something error in our database!")
+	}
+
+	userResponse := userCollection.FindOne(context.Background(),
 		bson.M{
-			"userid": user.UserId,
+			"_id": userIdInObjectId,
 		})
 	userData := &User{}
 	userResponse.Decode(userData)
-	return userData
+	return userData, nil
+}
+
+func (user *User) FindAllAdultUser() (*User, *response.RestBody){
+	userResponse, err := userCollection.Find(context.TODO(),
+		bson.M{
+			"age": bson.M{"$gt" : 17},
+		})
+	if err != nil{
+		logger.Error("Error when getting adult user's data", err)
+		return nil, response.NewInternalServerError("There is something error in our database!")
+	}
+
+	userData := &User{}
+	userResponse.Decode(userData)
+	return userData, nil
+
 }
 
